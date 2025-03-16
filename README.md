@@ -38,4 +38,3 @@ It does not grant clear answers—only unsettling insights into what may, or mus
 "You will read from the Necronomicon of Eldritch Prophecies, but it will also read you. You may laugh at its words, but somewhere, something has whispered them before. And one day, they will come true."
 
 ## 😈📜
-
