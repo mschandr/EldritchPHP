@@ -72,7 +72,7 @@ class MarkovChain {
     }
 
     private function shouldStop($sentence) {
-        $minWords = 6;
+        $minWords = 8;
         $stopProbability = 0.25; // 25% chance to stop at punctuation
 
         if (count($sentence) < $minWords) {
