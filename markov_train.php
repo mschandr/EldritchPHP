@@ -30,6 +30,7 @@ class MarkovChain {
     }
 
     public function generate($maxWords = 15) {
+<<<<<<< Updated upstream
         $validStartWords = array_filter(array_keys($this->chain), function ($word) {
             return ctype_upper($word[0]); // Ensure the first letter is uppercase
         });
@@ -47,6 +48,21 @@ class MarkovChain {
             if (!isset($this->chain[$currentWord])) break;
 
             $nextWords = $this->chain[$currentWord];
+=======
+        $validStartPairs = array_keys($this->chain);
+
+        // Ensure we start with an actual phrase (not a random word)
+        $currentPair = $validStartPairs[array_rand($validStartPairs)];
+        $sentence = explode(' ', $currentPair);
+
+        $minWords = 6; // Ensures a prophecy has at least 6 words
+        $stopProbability = 0.25; // 25% chance to stop at punctuation (so it doesn’t always cut off)
+
+        for ($i = 0; $i < $maxWords; $i++) {
+            if (!isset($this->chain[$currentPair])) break;
+
+            $nextWords = $this->chain[$currentPair];
+>>>>>>> Stashed changes
             $randomPick = mt_rand(1, 100) / 100.0;
             $cumulative = 0;
 
@@ -54,16 +70,45 @@ class MarkovChain {
                 $cumulative += $probability;
                 if ($randomPick <= $cumulative) {
                     $sentence[] = $word;
+<<<<<<< Updated upstream
                     $currentWord = $word;
+=======
+                    $currentPair = $sentence[count($sentence) - 2] . ' ' . $sentence[count($sentence) - 1];
+>>>>>>> Stashed changes
                     break;
                 }
             }
 
+<<<<<<< Updated upstream
             if (preg_match('/[.!?]$/', $currentWord)) break; // Stop at punctuation
         }
 
         return ucfirst(implode(' ', $sentence)) . '.';
     }
+=======
+            // Prevent early stopping
+            if (count($sentence) < $minWords) {
+                continue; // Keep generating words
+            }
+
+            // Stop only if a clean sentence ending is reached
+            if (preg_match('/[.!?]+$/', end($sentence)) && mt_rand(1, 100) / 100.0 < $stopProbability) {
+                break;
+            }
+        }
+
+        // Ensure a clean sentence ending
+        $lastWord = end($sentence);
+        if (!preg_match('/[.!?]+$/', $lastWord)) {
+            $sentence[] = '.';
+        }
+
+        return ucfirst(implode(' ', $sentence));
+
+    }
+
+
+>>>>>>> Stashed changes
 }
 
 // Load prophecy training data
