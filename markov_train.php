@@ -73,14 +73,22 @@ class MarkovChain {
 
     private function shouldStop($sentence) {
         $minWords = 6;
-        $stopProbability = 0.25; // 25% chance to stop if punctuation is found
+        $stopProbability = 0.25; // 25% chance to stop at punctuation
 
         if (count($sentence) < $minWords) {
-            return false; // Continue if sentence is too short
+            return false; // Ensure minimum sentence length
         }
 
-        if (preg_match('/[.!?]+$/', end($sentence)) && mt_rand(1, 100) / 100.0 < $stopProbability) {
-            return true; // Stop if we hit punctuation and probability allows
+        $lastWord = end($sentence);
+
+        // Define weak words that should NOT be allowed as final words
+        $weakWords = ['the', 'a', 'an', 'is', 'it', 'to', 'at', 'on', 'in', 'by', 'was', 'of', 'and', 'but', 'or'];
+        if (in_array(strtolower($lastWord), $weakWords)) {
+            return false; // Don't stop on weak words
+        }
+
+        if (preg_match('/[.!?]+$/', $lastWord) && mt_rand(1, 100) / 100.0 < $stopProbability) {
+            return true; // Stop only if punctuation is at a strong word
         }
 
         return false;
