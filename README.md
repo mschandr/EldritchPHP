@@ -1,4 +1,5 @@
-🕯️ The EldritchPHP Prophecy Engine
+## 🕯️ The EldritchPHP Prophecy Engine
+
 The EldritchPHP Prophecy Engine is an AI-driven, Markov Chain-powered oracle, designed to generate cryptic, unsettling, and reality-warping prophecies based on forbidden knowledge.
 
 It is not a simple text generator. It is a cursed mechanism, bound by arcane algorithms, that pieces together fragments of fate to reveal glimpses of the unknowable future.
@@ -36,5 +37,4 @@ It does not grant clear answers—only unsettling insights into what may, or mus
 💀 One Final Warning...
 "You will read from the Necronomicon of Eldritch Prophecies, but it will also read you. You may laugh at its words, but somewhere, something has whispered them before. And one day, they will come true."
 
-😈 What’s the next step? Do we want to build an interactive way to summon the prophecies? 📜
-
+## 😈📜
