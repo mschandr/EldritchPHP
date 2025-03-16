@@ -1,7 +1,8 @@
 <?php
 
-class MarkovChain {
+class ScoredMarkovChain {
     private $chain = [];
+    private $scoresFile = "scores.json";
 
     public function train($text) {
         $words = explode(' ', strtolower($text));
@@ -81,11 +82,77 @@ class MarkovChain {
             $sentence[] = '.';
         }
     }
+
+    public function scoreProphecy($prophecy) {
+        echo "📜 Your Eldritch Prophecy: $prophecy\n";
+        echo "Rate this prophecy (1-5): ";
+        $score = trim(fgets(STDIN));
+
+        if (!in_array($score, ['1', '2', '3', '4', '5'])) {
+            echo "Invalid score. Must be between 1-5.\n";
+            return;
+        }
+
+        $this->saveScore($prophecy, (int)$score);
+    }
+
+    private function saveScore($prophecy, $score) {
+        $scores = [];
+
+        if (file_exists($this->scoresFile)) {
+            $scores = json_decode(file_get_contents($this->scoresFile), true);
+        }
+
+        $scores[] = ["prophecy" => $prophecy, "score" => $score];
+        file_put_contents($this->scoresFile, json_encode($scores, JSON_PRETTY_PRINT));
+
+        echo "Saved score: $score\n";
+    }
+
+    public function improveModel() {
+        if (!file_exists($this->scoresFile)) {
+            echo "No scores available. Train more first.\n";
+            return;
+        }
+
+        $scores = json_decode(file_get_contents($this->scoresFile), true);
+
+        foreach ($scores as $entry) {
+            $prophecy = explode(' ', strtolower($entry["prophecy"]));
+            $score = $entry["score"];
+
+            for ($i = 0; $i < count($prophecy) - 2; $i++) {
+                $pair = $prophecy[$i] . ' ' . $prophecy[$i + 1];
+                $nextWord = $prophecy[$i + 2];
+
+                if (isset($this->chain[$pair][$nextWord])) {
+                    $this->chain[$pair][$nextWord] += ($score - 3); // Adjust weight based on score
+                }
+            }
+        }
+
+        echo "Model updated based on scores.\n";
+    }
 }
 
 // Load prophecy training data
 $prophecyText = file_get_contents(__DIR__ . '/training_data/file.txt');
-$markov = new MarkovChain();
+$markov = new ScoredMarkovChain();
 $markov->train($prophecyText);
 
-echo "📜 Your Eldritch Prophecy: " . $markov->generate() . PHP_EOL;
+while (true) {
+    $prophecy = $markov->generate();
+    $markov->scoreProphecy($prophecy);
+
+    echo "Generate another prophecy? (y/n): ";
+    $response = trim(fgets(STDIN));
+    if (strtolower($response) !== 'y') {
+        echo "Would you like to improve the model based on scores? (y/n): ";
+        $trainResponse = trim(fgets(STDIN));
+        if (strtolower($trainResponse) === 'y') {
+            $markov->improveModel();
+        }
+        break;
+    }
+}
+

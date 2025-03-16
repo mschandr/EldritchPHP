@@ -1,6 +1,6 @@
 <?php
 
-class MarkovChain {
+class ReinforcedMarkovChain {
     private $chain = [];
 
     public function train($text) {
@@ -40,6 +40,7 @@ class MarkovChain {
         }
 
         $this->finalizeSentence($sentence);
+        $this->updateWeights($sentence); // RL update step
         return ucfirst(implode(' ', $sentence));
     }
 
@@ -81,11 +82,62 @@ class MarkovChain {
             $sentence[] = '.';
         }
     }
+
+    private function updateWeights($sentence) {
+        $score = $this->evaluateProphecy($sentence);
+        $previousPairs = [];
+
+        for ($i = 0; $i < count($sentence) - 2; $i++) {
+            $pair = $sentence[$i] . ' ' . $sentence[$i + 1];
+            $nextWord = $sentence[$i + 2];
+
+            // Prevent repeated phrases from getting stronger
+            if (isset($previousPairs[$pair])) {
+                $score = max(-1, $score - 1); // Slightly lower repeated phrases
+            } else {
+                $previousPairs[$pair] = true;
+            }
+
+            if (isset($this->chain[$pair][$nextWord])) {
+                $this->chain[$pair][$nextWord] += $score;
+                if ($this->chain[$pair][$nextWord] < 1) {
+                    $this->chain[$pair][$nextWord] = 1; // Prevent negative weights
+                }
+            }
+        }
+    }
+
+
+    private function evaluateProphecy($sentence) {
+        $lastWord = end($sentence);
+        $strongEndings = ['darkness', 'death', 'eternal', 'whispers', 'shadows'];
+
+        // Reward if it ends on a strong word
+        if (in_array(strtolower($lastWord), $strongEndings)) {
+            return 2;
+        }
+
+        // Penalize if too short
+        if (count($sentence) < 6) {
+            return -2;
+        }
+
+        // Penalize if nonsense words appear
+        $badPhrases = ['the.', 'it.', 'is.', 'and.', 'but.', 'or.', 'at.', 'by.', 'in.', 'of.'];
+        foreach ($badPhrases as $phrase) {
+            if (strpos(strtolower(implode(' ', $sentence)), $phrase) !== false) {
+                return -1;
+            }
+        }
+
+        return 1; // Default reward for neutral sentences
+    }
 }
 
 // Load prophecy training data
 $prophecyText = file_get_contents(__DIR__ . '/training_data/file.txt');
-$markov = new MarkovChain();
+$markov = new ReinforcedMarkovChain();
 $markov->train($prophecyText);
 
 echo "📜 Your Eldritch Prophecy: " . $markov->generate() . PHP_EOL;
+
