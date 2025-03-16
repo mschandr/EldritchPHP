@@ -24,7 +24,12 @@ class MarkovChain {
         foreach ($this->chain as $pair => $nextWords) {
             $total = array_sum($nextWords);
             foreach ($nextWords as $nextWord => $count) {
-                $this->chain[$pair][$nextWord] = $count / $total;
+                // Normalize word probabilities
+                $weight = ($count / $total);
+                if ($weight > 0.3) {
+                    $weight = 0.3 + (0.7 * (rand(1, 10) / 10)); // Adjust probability variation
+                }
+                $this->chain[$pair][$nextWord] = $weight;
             }
         }
     }
@@ -36,10 +41,9 @@ class MarkovChain {
         $currentPair = $validStartPairs[array_rand($validStartPairs)];
         $sentence = explode(' ', $currentPair);
 
-        $minWords = 6; // Ensures a prophecy has at least 6 words
-        $stopProbability = 0.25; // 25% chance to stop at punctuation (so it doesn’t always cut off)
+        $forceStopAfter = 18; // Force stop if exceeding max length
 
-        for ($i = 0; $i < $maxWords; $i++) {
+        for ($i = 0; $i < $forceStopAfter; $i++) {
             if (!isset($this->chain[$currentPair])) break;
 
             $nextWords = $this->chain[$currentPair];
@@ -55,24 +59,38 @@ class MarkovChain {
                 }
             }
 
-            // Prevent early stopping
-            if (count($sentence) < $minWords) {
-                continue; // Keep generating words
-            }
-
-            // Stop only if a clean sentence ending is reached
-            if (preg_match('/[.!?]+$/', end($sentence)) && mt_rand(1, 100) / 100.0 < $stopProbability) {
+            // Check if we should stop generating
+            if ($this->shouldStop($sentence)) {
                 break;
             }
         }
 
-        // Ensure a clean sentence ending
-        $lastWord = end($sentence);
-        if (!preg_match('/[.!?]+$/', $lastWord)) {
-            $sentence[] = '.';
-        }
+        // Ensure proper sentence closure
+        $this->finalizeSentence($sentence);
 
         return ucfirst(implode(' ', $sentence));
+    }
+
+    private function shouldStop($sentence) {
+        $minWords = 6;
+        $stopProbability = 0.25; // 25% chance to stop if punctuation is found
+
+        if (count($sentence) < $minWords) {
+            return false; // Continue if sentence is too short
+        }
+
+        if (preg_match('/[.!?]+$/', end($sentence)) && mt_rand(1, 100) / 100.0 < $stopProbability) {
+            return true; // Stop if we hit punctuation and probability allows
+        }
+
+        return false;
+    }
+
+    private function finalizeSentence(&$sentence) {
+        $lastWord = end($sentence);
+        if (!preg_match('/[.!?]+$/', $lastWord)) {
+            $sentence[] = '.'; // Ensure proper sentence ending
+        }
     }
 }
 
