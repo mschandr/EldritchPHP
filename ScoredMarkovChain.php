@@ -1,8 +1,13 @@
 <?php
 
-class ScoredMarkovChain {
+class PersistentMarkovChain {
     private $chain = [];
     private $scoresFile = "scores.json";
+    private $modelFile = "markov_model.json";
+
+    public function __construct() {
+        $this->loadModel();
+    }
 
     public function train($text) {
         $words = explode(' ', strtolower($text));
@@ -21,6 +26,7 @@ class ScoredMarkovChain {
                 $this->chain[$pair][$nextWord]++; // Increase occurrence count
             }
         }
+        $this->saveModel(); // Save updated model
     }
 
     public function generate($maxWords = 15) {
@@ -130,14 +136,39 @@ class ScoredMarkovChain {
                 }
             }
         }
-
+        $this->saveModel(); // Save after updating model
         echo "Model updated based on scores.\n";
+    }
+
+    private function saveModel() {
+        file_put_contents($this->modelFile, json_encode($this->chain, JSON_PRETTY_PRINT));
+    }
+
+    private function loadModel() {
+        if (file_exists($this->modelFile)) {
+            $this->chain = json_decode(file_get_contents($this->modelFile), true);
+        }
+    }
+
+    private function cleanProphecy($text) {
+        // Remove all punctuation except spaces and newlines
+        $text = preg_replace("/[^\w\s]/", "", $text);
+
+        // Remove excessive spaces and newlines
+        $text = trim(preg_replace('/\s+/', ' ', $text));
+
+        // Ensure a period at the end
+        if (!preg_match('/[.!?]$/', $text)) {
+            $text .= '.';
+        }
+
+        return ucfirst($text); // Capitalize first letter
     }
 }
 
-// Load prophecy training data
+// Load training data
 $prophecyText = file_get_contents(__DIR__ . '/training_data/file.txt');
-$markov = new ScoredMarkovChain();
+$markov = new PersistentMarkovChain();
 $markov->train($prophecyText);
 
 while (true) {
