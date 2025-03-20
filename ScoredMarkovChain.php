@@ -50,6 +50,19 @@ class PersistentMarkovChain {
         return ucfirst(implode(' ', $sentence));
     }
 
+    public function scoreProphecy($prophecy) {
+        echo "📜 Your Eldritch Prophecy: ".$prophecy."\n";
+        echo "Rate this prophecy (1-5): ";
+        $score = trim(fgets(STDIN));
+
+        if (!in_array($score, ['1', '2', '3', '4', '5'])) {
+            echo "Invalid score. Must be between 1-5.\n";
+            return;
+        }
+
+        $this->saveScore($prophecy, (int)$score);
+    }
+
     private function selectNextWord($options) {
         $totalWeight = array_sum($options);
         $rand = mt_rand(1, $totalWeight);
@@ -75,7 +88,8 @@ class PersistentMarkovChain {
         }
 
         $lastWord = end($sentence);
-        if (preg_match('/[.!?]+$/', $lastWord) && (in_array(strtolower($lastWord), $strongWords) || mt_rand(1, 100) / 100.0 < $stopProbability)) {
+        if (preg_match('/[.!?]+$/', $lastWord) &&
+            (in_array(strtolower($lastWord), $strongWords) || mt_rand(1, 100) / 100.0 < $stopProbability)) {
             return true;
         }
 
@@ -87,19 +101,6 @@ class PersistentMarkovChain {
         if (!preg_match('/[.!?]+$/', $lastWord)) {
             $sentence[] = '.';
         }
-    }
-
-    public function scoreProphecy($prophecy) {
-        echo "📜 Your Eldritch Prophecy: $prophecy\n";
-        echo "Rate this prophecy (1-5): ";
-        $score = trim(fgets(STDIN));
-
-        if (!in_array($score, ['1', '2', '3', '4', '5'])) {
-            echo "Invalid score. Must be between 1-5.\n";
-            return;
-        }
-
-        $this->saveScore($prophecy, (int)$score);
     }
 
     private function saveScore($prophecy, $score) {
@@ -148,21 +149,6 @@ class PersistentMarkovChain {
         if (file_exists($this->modelFile)) {
             $this->chain = json_decode(file_get_contents($this->modelFile), true);
         }
-    }
-
-    private function cleanProphecy($text) {
-        // Remove all punctuation except spaces and newlines
-        $text = preg_replace("/[^\w\s]/", "", $text);
-
-        // Remove excessive spaces and newlines
-        $text = trim(preg_replace('/\s+/', ' ', $text));
-
-        // Ensure a period at the end
-        if (!preg_match('/[.!?]$/', $text)) {
-            $text .= '.';
-        }
-
-        return ucfirst($text); // Capitalize first letter
     }
 }
 
